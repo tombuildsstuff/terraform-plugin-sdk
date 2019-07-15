@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR=$(realpath $(dirname $0))
+
 SDK_FOLDERS="helper/acctest
 helper/customdiff
 helper/encryption
@@ -17,6 +19,14 @@ plugin
 terraform
 "
 
+# We just statically exclude anything in these directories
+# to reduce the total list of files git has to go through
+EXCLUDE_DIRS="builtin/
+docs/
+scripts/
+vendor/
+website/"
+
 echo "Finding imports ..."
 IMPORTS=$(echo "$SDK_FOLDERS" | xargs -I{} go list -json ./{} | jq -r ".ImportPath" | sort | uniq | sed -e 's/^github.com\/hashicorp\/terraform\///')
 echo "Finding build dependencies ..."
@@ -28,30 +38,26 @@ TEST_DEPS=$(echo "$TEST_IMPORTS" | xargs -I{} go list -json ./{} | jq -r ". | se
 
 echo "All dependencies found."
 
-mkdir -p ../terraform-plugin-sdk/sdk/internal
-
 # Find all SDK related files
 ALL_PKGS=$(printf "${IMPORTS}\n${DEPS}\n${TEST_IMPORTS}\n${TEST_DEPS}" | sort | uniq)
 COUNT_PKG=$(echo "$ALL_PKGS" | wc -l | tr -d ' ')
 echo "Finding files of ${COUNT_PKG} packages ..."
 
-SDK_FILES=$(echo "$ALL_PKGS" | xargs -I_  find . -path ./_/* \( -path './_/testdata*' -or -prune \))
+SDK_FILES=$(echo "$ALL_PKGS" | xargs -I_  find ./ -path ./_/* \( -path './_/testdata*' -or -prune \) | xargs -I{} realpath --relative-to ./ {})
 SDK_LIST_PATH=$(mktemp)
 
 echo "$SDK_FILES" > $SDK_LIST_PATH
 echo "SDK files listed in ${SDK_LIST_PATH}"
 
-# echo "Computing the difference ..."
-# TO_REMOVE_PATH=$(mktemp)
-# NONSDK_FILES=$(find . -type f | grep -Fxvf $SDK_LIST_PATH | grep -v  > $TO_REMOVE_PATH)
-# rm -f $SDK_LIST_PATH
-# echo "Files to remove are listed in ${TO_REMOVE_PATH}"
+echo "Computing the difference ..."
+TO_REMOVE_PATH=$(mktemp)
+find . -type f | grep -Fxvf $SDK_LIST_PATH > $TO_REMOVE_PATH
+echo "NonSDK files are listed in ${TO_REMOVE_PATH}"
 
 # Copy SDK files to new place
-# TODO: git filter-branch --index-filter 'echo "$TO_REMOVE_PATH" | xargs -I{} git rm --cached --ignore-unmatch {}' HEAD
-cat $SDK_LIST_PATH | xargs -I{} rsync -m -lptgoDd -R {} ../terraform-plugin-sdk/sdk/
+git filter-branch -f --prune-empty --index-filter "$SCRIPT_DIR/git-filter.sh $TO_REMOVE_PATH \"$EXCLUDE_DIRS\"" HEAD
 
-cd ../terraform-plugin-sdk/sdk
+mkdir -p ./sdk/internal
 
 # Change import paths
 echo "Changing import paths from terraform to terraform-plugin-sdk ..."
