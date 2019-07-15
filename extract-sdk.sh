@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# TODO: Check go
+# TODO: Check jq
+# TODO: Check version of grep to make sure it's GNU 3.3+
+
 SCRIPT_DIR=$(realpath $(dirname $0))
 
 SDK_FOLDERS="helper/acctest
@@ -54,7 +58,7 @@ TO_REMOVE_PATH=$(mktemp)
 find . -type f | grep -Fxvf $SDK_LIST_PATH > $TO_REMOVE_PATH
 echo "NonSDK files are listed in ${TO_REMOVE_PATH}"
 
-# Copy SDK files to new place
+# Remove non-SDK files
 git filter-branch -f --prune-empty --index-filter "$SCRIPT_DIR/git-filter.sh $TO_REMOVE_PATH \"$EXCLUDE_DIRS\"" HEAD
 
 mkdir -p ./sdk/internal
@@ -70,11 +74,9 @@ go get ./...
 go mod tidy
 echo "Go modules initialized."
 
-# TODO: Check version of grep to make sure it's GNU 3.3+
-
 echo "Moving internal packages up ..."
 # Flatten sdk/internal/* into sdk/* to avoid nested internal packages & breaking import trees
-INTERNAL_FOLDERS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/sdk\///' | ggrep -E '^internal\/' | sed -e 's/^internal\///')
+INTERNAL_FOLDERS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/sdk\///' | grep -E '^internal\/' | sed -e 's/^internal\///')
 cd ./sdk
 echo "$INTERNAL_FOLDERS" | xargs -I{} mv ./internal/{} ./{}
 rm -rf ./internal
@@ -87,7 +89,7 @@ SDK_PKGS_LIST_PATH=$(mktemp)
 # Find all parent folders first
 PARENT_FOLDERS="$SDK_FOLDERS"
 while [[ $(echo -n "$PARENT_FOLDERS" | wc -l) -gt 0 ]]; do
-	PARENT_FOLDERS=$(echo "$PARENT_FOLDERS" | xargs -I{} dirname {} | ggrep -xFv '.' | sort | uniq)
+	PARENT_FOLDERS=$(echo "$PARENT_FOLDERS" | xargs -I{} dirname {} | grep -xFv '.' | sort | uniq)
 	echo "$PARENT_FOLDERS" | xargs -I{} echo ./{} > $SDK_PKGS_LIST_PATH
 done
 
@@ -97,8 +99,8 @@ echo "SDK packages stored in $SDK_PKGS_LIST_PATH"
 
 SDK_FOLDERS_PATTERNS_PATH=$(mktemp)
 cat $SDK_PKGS_LIST_PATH | xargs -I{} sh -c "echo ^{}\$; echo ^{}/testdata" > $SDK_FOLDERS_PATTERNS_PATH
-NONSDK_FOLDERS=$(find . -type d -and \( ! -path './.git*' \) | ggrep -xFv '.' | ggrep -v -f $SDK_FOLDERS_PATTERNS_PATH)
-NONSDK_GO_PKGS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/sdk/\./' | ggrep -xFv -f $SDK_PKGS_LIST_PATH | sed -e 's/^\.\///')
+NONSDK_FOLDERS=$(find . -type d -and \( ! -path './.git*' \) | grep -xFv '.' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH)
+NONSDK_GO_PKGS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/sdk/\./' | grep -xFv -f $SDK_PKGS_LIST_PATH | sed -e 's/^\.\///')
 
 NONSDK_GO_PKGS_PATH=$(mktemp)
 echo "$NONSDK_GO_PKGS" > $NONSDK_GO_PKGS_PATH
