@@ -27,6 +27,7 @@ terraform
 # to reduce the total list of files git has to go through
 EXCLUDE_DIRS="builtin/
 docs/
+examples/
 scripts/
 vendor/
 website/"
@@ -47,19 +48,16 @@ ALL_PKGS=$(printf "${IMPORTS}\n${DEPS}\n${TEST_IMPORTS}\n${TEST_DEPS}" | sort | 
 COUNT_PKG=$(echo "$ALL_PKGS" | wc -l | tr -d ' ')
 echo "Finding files of ${COUNT_PKG} packages ..."
 
-SDK_FILES=$(echo "$ALL_PKGS" | xargs -I_  find ./ -path ./_/* \( -path './_/testdata*' -or -prune \) | xargs -I{} realpath --relative-to ./ {})
-SDK_LIST_PATH=$(mktemp)
+SDK_DIRS=$(echo "$ALL_PKGS" | xargs -I_  find . -path ./_/* \( -path './_/testdata*' -or -prune \) | xargs -I{} realpath --relative-to ./ {} | xargs -I{} $SCRIPT_DIR/dirname-recursive.sh {} | sort | uniq)
+SDK_DIRS_PATH=$(mktemp)
 
-echo "$SDK_FILES" > $SDK_LIST_PATH
-echo "SDK files listed in ${SDK_LIST_PATH}"
-
-echo "Computing the difference ..."
-TO_REMOVE_PATH=$(mktemp)
-find . -type f | grep -Fxvf $SDK_LIST_PATH > $TO_REMOVE_PATH
-echo "NonSDK files are listed in ${TO_REMOVE_PATH}"
+echo "$SDK_DIRS" > $SDK_DIRS_PATH
+echo "SDK dirs listed in ${SDK_DIRS_PATH}"
 
 # Remove non-SDK files
-git filter-branch -f --prune-empty --index-filter "$SCRIPT_DIR/git-filter.sh $TO_REMOVE_PATH \"$EXCLUDE_DIRS\"" HEAD
+GIT_FILTER_LOG_PATH=$(mktemp)
+echo "Filtering commits, logging to ${GIT_FILTER_LOG_PATH}"
+git filter-branch -f --prune-empty --index-filter "$SCRIPT_DIR/git-filter.sh $SDK_DIRS_PATH \"$EXCLUDE_DIRS\"" HEAD > $GIT_FILTER_LOG_PATH
 
 mkdir -p ./sdk/internal
 
