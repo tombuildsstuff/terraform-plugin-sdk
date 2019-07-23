@@ -45,6 +45,8 @@ echo "All dependencies found."
 
 # Find all SDK related files
 ALL_PKGS=$(printf "${IMPORTS}\n${DEPS}\n${TEST_IMPORTS}\n${TEST_DEPS}" | sort | uniq)
+ALL_PKGS_LIST_PATH=$(mktemp); echo "$ALL_PKGS" > $ALL_PKGS_LIST_PATH
+echo "All packages listed in ${ALL_PKGS_LIST_PATH}"
 COUNT_PKG=$(echo "$ALL_PKGS" | wc -l | tr -d ' ')
 echo "Finding files of ${COUNT_PKG} packages ..."
 
