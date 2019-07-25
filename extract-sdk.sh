@@ -49,7 +49,7 @@ echo "SDK patterns listed in ${SDK_PATTERNS_PATH}"
 # Remove non-SDK files
 GIT_FILTER_LOG_PATH=$(mktemp)
 echo "Filtering commits, logging to ${GIT_FILTER_LOG_PATH}"
-git filter-branch --prune-empty --index-filter "git ls-files | grep -Evf $SDK_PATTERNS_PATH | cut -d / -f 1-2 | uniq | xargs -n1 git rm -rf" HEAD > $GIT_FILTER_LOG_PATH
+git filter-branch --prune-empty --index-filter "git ls-files | grep -Evf $SDK_PATTERNS_PATH | cut -d / -f 1-2 | uniq | xargs -n1 git rm --quiet -rf" HEAD > $GIT_FILTER_LOG_PATH
 
 echo "Moving all packages under /sdk"
 DIRS_TO_MOVE=$(ls)
