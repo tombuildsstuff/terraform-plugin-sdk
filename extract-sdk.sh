@@ -42,7 +42,7 @@ COUNT_PKG=$(echo "$ALL_PKGS" | wc -l | tr -d ' ')
 echo "Finding files of ${COUNT_PKG} packages ..."
 
 # Turn dirs into patterns
-SDK_PATTERNS=$(echo "$SDK_DIRS" | xargs -I{} echo '^{}/(testdata/.*|[^/]*)$')
+SDK_PATTERNS=$(echo "$ALL_PKGS" | xargs -I{} echo '^{}/(testdata/.*|[^/]*)$')
 SDK_PATTERNS_PATH=$(mktemp); echo "$SDK_PATTERNS" > $SDK_PATTERNS_PATH
 echo "SDK patterns listed in ${SDK_PATTERNS_PATH}"
 
