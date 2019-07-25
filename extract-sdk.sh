@@ -41,10 +41,6 @@ echo "All packages listed in ${ALL_PKGS_LIST_PATH}"
 COUNT_PKG=$(echo "$ALL_PKGS" | wc -l | tr -d ' ')
 echo "Finding files of ${COUNT_PKG} packages ..."
 
-SDK_DIRS=$(echo "$ALL_PKGS" | xargs -I_  find . -path ./_/* \( -path './_/testdata*' -or -prune \) | xargs -I{} realpath --relative-to ./ {} | xargs -I{} $SCRIPT_DIR/dirname-recursive.sh {} | sort | uniq)
-SDK_DIRS_PATH=$(mktemp); echo "$SDK_DIRS" > $SDK_DIRS_PATH
-echo "SDK dirs listed in ${SDK_DIRS_PATH}"
-
 # Turn dirs into patterns
 SDK_PATTERNS=$(echo "$SDK_DIRS" | xargs -I{} echo '^{}/(testdata/.*|[^/]*)$')
 SDK_PATTERNS_PATH=$(mktemp); echo "$SDK_PATTERNS" > $SDK_PATTERNS_PATH
