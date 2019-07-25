@@ -23,15 +23,6 @@ plugin
 terraform
 "
 
-# We just statically exclude anything in these directories
-# to reduce the total list of files git has to go through
-EXCLUDE_DIRS="builtin/
-docs/
-examples/
-scripts/
-vendor/
-website/"
-
 echo "Finding imports ..."
 IMPORTS=$(echo "$SDK_FOLDERS" | xargs -I{} go list -json ./{} | jq -r ".ImportPath" | sort | uniq | sed -e 's/^github.com\/hashicorp\/terraform\///')
 echo "Finding build dependencies ..."
@@ -51,24 +42,29 @@ COUNT_PKG=$(echo "$ALL_PKGS" | wc -l | tr -d ' ')
 echo "Finding files of ${COUNT_PKG} packages ..."
 
 SDK_DIRS=$(echo "$ALL_PKGS" | xargs -I_  find . -path ./_/* \( -path './_/testdata*' -or -prune \) | xargs -I{} realpath --relative-to ./ {} | xargs -I{} $SCRIPT_DIR/dirname-recursive.sh {} | sort | uniq)
-SDK_DIRS_PATH=$(mktemp)
-
-echo "$SDK_DIRS" > $SDK_DIRS_PATH
+SDK_DIRS_PATH=$(mktemp); echo "$SDK_DIRS" > $SDK_DIRS_PATH
 echo "SDK dirs listed in ${SDK_DIRS_PATH}"
+
+# Turn dirs into patterns
+SDK_PATTERNS=$(echo "$SDK_DIRS" | xargs -I{} echo '^{}/(testdata/.*|[^/]*)$')
+SDK_PATTERNS_PATH=$(mktemp); echo "$SDK_PATTERNS" > $SDK_PATTERNS_PATH
+echo "SDK patterns listed in ${SDK_PATTERNS_PATH}"
 
 # Remove non-SDK files
 GIT_FILTER_LOG_PATH=$(mktemp)
 echo "Filtering commits, logging to ${GIT_FILTER_LOG_PATH}"
-git filter-branch -f --prune-empty --index-filter "$SCRIPT_DIR/git-filter.sh $SDK_DIRS_PATH \"$EXCLUDE_DIRS\"" HEAD > $GIT_FILTER_LOG_PATH
+git filter-branch --prune-empty --index-filter "git ls-files | grep -Evf $SDK_PATTERNS_PATH | cut -d / -f 1-2 | uniq | xargs -n1 git rm -rf" HEAD > $GIT_FILTER_LOG_PATH
 
-mkdir -p ./sdk/internal
+echo "Moving all packages under /sdk"
+DIRS_TO_MOVE=$(ls)
+mkdir -p sdk/internal
+echo "$DIRS_TO_MOVE" | xargs -I{} git mv {} sdk/{}
 
 # Change import paths
 echo "Changing import paths from terraform to terraform-plugin-sdk ..."
 find . -name '*.go' | xargs -I{} sed -i 's/github.com\/hashicorp\/terraform\([\/"]\)/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\1/' {}
 
-echo "Initializing go modules ..."
-cd ..
+echo "(re)initializing go modules ..."
 go mod init
 go get ./...
 go mod tidy
