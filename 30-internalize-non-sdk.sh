@@ -13,7 +13,6 @@ echo "Found ${COUNT_FOLDERS} internal folders for moving."
 echo "$INTERNAL_FOLDERS" | xargs -I{} git mv -v ./internal/{} ./{}
 # Update import paths for internal packages
 echo "$INTERNAL_FOLDERS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}/' @"
-cd ..
 echo "Internal packages moved."
 
 # TODO: Pass this as a variable + check
