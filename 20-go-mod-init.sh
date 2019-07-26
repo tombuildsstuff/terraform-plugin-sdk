@@ -4,8 +4,6 @@
 # TODO: Check jq
 # TODO: Check version of grep to make sure it's GNU 3.3+
 
-SCRIPT_DIR=$(realpath $(dirname $0))
-
 echo "Moving all packages under /sdk"
 DIRS_TO_MOVE=$(ls)
 mkdir -p sdk/internal
@@ -17,7 +15,7 @@ find . -name '*.go' | xargs -I{} sed -i 's/github.com\/hashicorp\/terraform\([\/
 
 echo "Moving internal packages up ..."
 # Flatten sdk/internal/* into sdk/* to avoid nested internal packages & breaking import trees
-INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$SCRIPT_DIR\/sdk\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
+INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$PWD\/sdk\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
 cd ./sdk
 COUNT_FOLDERS=$(echo "$INTERNAL_FOLDERS" | wc -l | tr -d ' ')
 echo "Found ${COUNT_FOLDERS} internal folders for moving."

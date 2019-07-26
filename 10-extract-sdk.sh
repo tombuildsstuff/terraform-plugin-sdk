@@ -6,8 +6,6 @@ set -e
 # TODO: Check ifne (moreutils)
 # TODO: Check version of grep to make sure it's GNU 3.3+
 
-SCRIPT_DIR=$(realpath $(dirname $0))
-
 # TODO: Pass this as a variable + check
 SDK_FOLDERS="helper/acctest
 helper/customdiff
