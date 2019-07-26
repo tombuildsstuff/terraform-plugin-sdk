@@ -70,3 +70,5 @@ COUNT_NONSDK_GO_PKGS=$(echo "$NONSDK_GO_PKGS" | wc -l | tr -d ' ')
 echo "Updating $COUNT_NONSDK_GO_PKGS import paths for moved files ..."
 echo "$NONSDK_GO_PKGS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}\([\/\"]\)/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}\1/' @"
 echo "Import paths updated."
+
+git add -A && git commit -m "Hide non-SDK packages under sdk/internal"
