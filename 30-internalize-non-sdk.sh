@@ -62,6 +62,7 @@ echo "NonSDK folders stored in $NONSDK_FOLDERS_PATH"
 # Move all non-SDK folders
 echo "Moving non-SDK folders under internal ..."
 rm -rf ./internal
+# TODO: Fix mv: cannot move './internal' to a subdirectory of itself, './internal/./internal'
 echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'mkdir -p $(dirname ./internal/{}); [ -d {} ] && mv -v {} ./internal/{} || true'
 echo "Non-SDK folders moved."
 
