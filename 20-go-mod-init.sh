@@ -9,7 +9,7 @@ SCRIPT_DIR=$(realpath $(dirname $0))
 echo "Moving all packages under /sdk"
 DIRS_TO_MOVE=$(ls)
 mkdir -p sdk/internal
-echo "$DIRS_TO_MOVE" | xargs -I{} git mv {} sdk/{}
+echo "$DIRS_TO_MOVE" | xargs -I{} git mv -v {} sdk/{}
 
 # Change import paths
 echo "Changing import paths from terraform to terraform-plugin-sdk ..."
@@ -19,7 +19,7 @@ echo "Moving internal packages up ..."
 # Flatten sdk/internal/* into sdk/* to avoid nested internal packages & breaking import trees
 INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$SCRIPT_DIR\/sdk\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
 cd ./sdk
-echo "$INTERNAL_FOLDERS" | xargs -I{} mv ./internal/{} ./{}
+echo "$INTERNAL_FOLDERS" | xargs -I{} git mv -v ./internal/{} ./{}
 rm -rf ./internal/internal
 echo "$INTERNAL_FOLDERS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}/' @"
 cd ..
