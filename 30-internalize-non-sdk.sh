@@ -4,6 +4,19 @@
 # TODO: Check jq
 # TODO: Check version of grep to make sure it's GNU 3.3+
 
+echo "Moving internal packages up ..."
+# Flatten sdk/internal/* into sdk/* to avoid nested internal packages & breaking import trees
+INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$PWD\/sdk\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
+cd ./sdk
+COUNT_FOLDERS=$(echo "$INTERNAL_FOLDERS" | wc -l | tr -d ' ')
+echo "Found ${COUNT_FOLDERS} internal folders for moving."
+echo "$INTERNAL_FOLDERS" | xargs -I{} git mv -v ./internal/{} ./{}
+rm -rf ./internal/internal
+# Update import paths for internal packages
+echo "$INTERNAL_FOLDERS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}/' @"
+cd ..
+echo "Internal packages moved."
+
 # TODO: Pass this as a variable + check
 SDK_FOLDERS="helper/acctest
 helper/customdiff
