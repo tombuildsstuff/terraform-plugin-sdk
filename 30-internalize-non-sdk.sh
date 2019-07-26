@@ -8,6 +8,7 @@ echo "Moving internal packages up ..."
 # Flatten sdk/internal/* into sdk/* to avoid nested internal packages & breaking import trees
 INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$PWD\/sdk\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
 cd ./sdk
+mkdir internal
 COUNT_FOLDERS=$(echo "$INTERNAL_FOLDERS" | wc -l | tr -d ' ')
 echo "Found ${COUNT_FOLDERS} internal folders for moving."
 echo "$INTERNAL_FOLDERS" | xargs -I{} git mv -v ./internal/{} ./{}

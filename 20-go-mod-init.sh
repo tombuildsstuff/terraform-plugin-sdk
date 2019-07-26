@@ -6,7 +6,7 @@
 
 echo "Moving all packages under /sdk"
 DIRS_TO_MOVE=$(ls)
-mkdir -p sdk/internal
+mkdir sdk
 echo "$DIRS_TO_MOVE" | xargs -I{} git mv -v {} sdk/{}
 
 # Change import paths
