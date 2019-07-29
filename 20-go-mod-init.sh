@@ -19,6 +19,7 @@ echo "(re)initializing go modules ..."
 go mod init github.com/hashicorp/terraform-plugin-sdk
 go get ./...
 go mod tidy
+go mod vendor
 echo "Go modules initialized."
 
 git add -A && git commit -m "Initialize go modules"
