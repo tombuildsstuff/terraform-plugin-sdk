@@ -63,7 +63,10 @@ echo "NonSDK folders stored in $NONSDK_FOLDERS_PATH"
 # Move all non-SDK folders
 echo "Moving non-SDK folders under internal ..."
 mkdir ./internal
-echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'mv -v {} ./internal/{}'
+# Because NONSDK_FOLDERS contains nested folders and parents
+# can be moved before we get to children, we just ignore
+# the ones that are moved already
+echo "$NONSDK_FOLDERS" | xargs -I{} sh -c '[ -d {} ] && mv -v {} ./internal/{}'
 echo "Non-SDK folders moved."
 
 # Fix imports in newly moved non-SDK packages
