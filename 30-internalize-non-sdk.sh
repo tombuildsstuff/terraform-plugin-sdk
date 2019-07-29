@@ -62,6 +62,7 @@ echo "NonSDK folders stored in $NONSDK_FOLDERS_PATH"
 
 # Move all non-SDK folders
 echo "Moving non-SDK folders under internal ..."
+mkdir ./internal
 echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'mv -v {} ./internal/{}'
 echo "Non-SDK folders moved."
 
