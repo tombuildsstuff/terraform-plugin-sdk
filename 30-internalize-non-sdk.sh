@@ -62,7 +62,7 @@ echo "NonSDK folders stored in $NONSDK_FOLDERS_PATH"
 
 # Move all non-SDK folders
 echo "Moving non-SDK folders under internal ..."
-echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'git mv -v {} ./internal/{}'
+echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'mv -v {} ./internal/{}'
 echo "Non-SDK folders moved."
 
 # Fix imports in newly moved non-SDK packages
