@@ -11,6 +11,7 @@ cd ./sdk
 COUNT_FOLDERS=$(echo "$INTERNAL_FOLDERS" | wc -l | tr -d ' ')
 echo "Found ${COUNT_FOLDERS} internal folders for moving."
 echo "$INTERNAL_FOLDERS" | xargs -I{} git mv -v ./internal/{} ./{}
+rm -rf ./internal
 # Update import paths for internal packages
 echo "$INTERNAL_FOLDERS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}/' @"
 echo "Internal packages moved."
@@ -61,8 +62,7 @@ echo "NonSDK folders stored in $NONSDK_FOLDERS_PATH"
 
 # Move all non-SDK folders
 echo "Moving non-SDK folders under internal ..."
-rm -rf ./internal
-echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'mv -v {} ./internal/{}'
+echo "$NONSDK_FOLDERS" | xargs -I{} sh -c 'git mv -v {} ./internal/{}'
 echo "Non-SDK folders moved."
 
 # Fix imports in newly moved non-SDK packages
