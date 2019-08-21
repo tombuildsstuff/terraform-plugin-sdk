@@ -5,15 +5,14 @@
 # TODO: Check version of grep to make sure it's GNU 3.3+
 
 echo "Moving internal packages up ..."
-# Flatten sdk/internal/* into sdk/* to avoid nested internal packages & breaking import trees
-INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$PWD\/sdk\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
-cd ./sdk
+# Flatten internal/* into * to avoid nested internal packages & breaking import trees
+INTERNAL_FOLDERS=$(go list -json ./... | jq -r .Dir | sed -e "s;^$PWD\/;;" | grep -E '^internal\/' | sed -e 's/^internal\///')
 COUNT_FOLDERS=$(echo "$INTERNAL_FOLDERS" | wc -l | tr -d ' ')
 echo "Found ${COUNT_FOLDERS} internal folders for moving."
 echo "$INTERNAL_FOLDERS" | xargs -I{} git mv -v ./internal/{} ./{}
 rm -rf ./internal
 # Update import paths for internal packages
-echo "$INTERNAL_FOLDERS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}/' @"
+echo "$INTERNAL_FOLDERS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/internal\/{}/github.com\/hashicorp\/terraform-plugin-sdk\/{}/' @"
 echo "Internal packages moved."
 
 # TODO: Pass this as a variable + check
@@ -50,7 +49,7 @@ echo "SDK packages stored in $SDK_PKGS_LIST_PATH"
 SDK_FOLDERS_PATTERNS_PATH=$(mktemp)
 cat $SDK_PKGS_LIST_PATH | xargs -I{} sh -c "echo ^{}\$; echo ^{}/testdata" > $SDK_FOLDERS_PATTERNS_PATH
 NONSDK_FOLDERS=$(find . -type d -and \( ! -path './.git*' \) | grep -xFv '.' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH)
-NONSDK_GO_PKGS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/sdk/\./' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH | sed -e 's/^\.\///')
+NONSDK_GO_PKGS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/./' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH | sed -e 's/^\.\///')
 
 NONSDK_GO_PKGS_PATH=$(mktemp)
 echo "$NONSDK_GO_PKGS" > $NONSDK_GO_PKGS_PATH
@@ -72,7 +71,7 @@ echo "Non-SDK folders moved."
 # Fix imports in newly moved non-SDK packages
 COUNT_NONSDK_GO_PKGS=$(echo "$NONSDK_GO_PKGS" | wc -l | tr -d ' ')
 echo "Updating $COUNT_NONSDK_GO_PKGS import paths for moved files ..."
-echo "$NONSDK_GO_PKGS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/{}\([\/\"]\)/github.com\/hashicorp\/terraform-plugin-sdk\/sdk\/internal\/{}\1/' @"
+echo "$NONSDK_GO_PKGS" | sed 's/\//\\\\\//g' | xargs -I{} sh -c "find . -name '*.go' | xargs -I@ sed -i 's/github.com\/hashicorp\/terraform-plugin-sdk\/{}\([\/\"]\)/github.com\/hashicorp\/terraform-plugin-sdk\/internal\/{}\1/' @"
 echo "Import paths updated."
 
-git add -A && git commit -m "Hide non-SDK packages under sdk/internal"
+git add -A && git commit -m "Hide non-SDK packages under internal"
