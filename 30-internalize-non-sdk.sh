@@ -50,7 +50,7 @@ SDK_FOLDERS_PATTERNS_PATH=$(mktemp)
 cat $SDK_PKGS_LIST_PATH | xargs -I{} sh -c "echo ^{}\$; echo ^{}/testdata" > $SDK_FOLDERS_PATTERNS_PATH
 NONSDK_FOLDERS=$(find . -type d -and \( ! -path './.git*' \) -and \( ! -path './vendor*' \) -and \( ! -path './go.*' \) | grep -xFv '.' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH)
 NONSDK_FOLDERS="$NONSDK_FOLDERS"
-NONSDK_GO_PKGS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk\/./' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH | sed -e 's/^\.\///')
+NONSDK_GO_PKGS=$(go list -json ./... | jq -r .ImportPath | sed -e 's/^github.com\/hashicorp\/terraform-plugin-sdk/\./' | grep -v -f $SDK_FOLDERS_PATTERNS_PATH | sed -e 's/^\.\///')
 
 NONSDK_GO_PKGS_PATH=$(mktemp)
 echo "$NONSDK_GO_PKGS" > $NONSDK_GO_PKGS_PATH

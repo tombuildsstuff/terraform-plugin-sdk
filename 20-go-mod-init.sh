@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # TODO: Check go
-# TODO: Check jq
 # TODO: Check version of grep to make sure it's GNU 3.3+
 
 # Change import paths
