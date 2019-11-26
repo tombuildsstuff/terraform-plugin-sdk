@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"fmt"
 	"net/rpc"
 
 	"github.com/hashicorp/go-plugin"
@@ -13,10 +14,46 @@ type ResourceProviderPlugin struct {
 }
 
 func (p *ResourceProviderPlugin) Server(b *plugin.MuxBroker) (interface{}, error) {
+	if p.usesProtocol5Features() {
+		return nil, fmt.Errorf("This provider uses features which require protocol v5+ (i.e. Terraform v0.12)." +
+			" Please upgrade or contact the provider developer.")
+	}
+
 	return &ResourceProviderServer{
 		Broker:   b,
 		Provider: p.ResourceProvider(),
 	}, nil
+}
+
+func (p *ResourceProviderPlugin) usesProtocol5Features() (bool, error) {
+	// provider := p.ResourceProvider()
+
+	// dataSourceTypes := make([]string, 0, 0)
+	// for d := range p.DataSources() {
+	// 	if d.SchemaAvailable {
+	// 		dataSourceTypes = append(dataSourceTypes, d.Name)
+	// 	}
+	// }
+	// resourceTypes := make([]string, 0, 0)
+	// for d := range p.Resources() {
+	// 	if d.SchemaAvailable {
+	// 		resourceTypes = append(resourceTypes, d.Name)
+	// 	}
+	// }
+
+	// schema, err := p.GetSchema(&terraform.ProviderSchemaRequest{
+	// 	ResourceTypes: resourceTypes,
+	// 	DataSources:   dataSourceTypes,
+	// })
+
+	// // TODO: Check for proto5 features
+
+	// providerBlock := schema.Provider
+	// resourceTypes := schema.ResourceTypes // map[string]*configschema.Block
+	// dataSourceTypes := schema.DataSources // map[string]*configschema.Block
+
+	//	return false, nil
+	return true, nil
 }
 
 func (p *ResourceProviderPlugin) Client(
