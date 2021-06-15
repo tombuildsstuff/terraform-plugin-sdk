@@ -18,7 +18,7 @@ import (
 	testing "github.com/mitchellh/go-testing-interface"
 )
 
-func runProviderCommand(t testing.T, f func() error, wd *plugintest.WorkingDir, factories map[string]func() (*schema.Provider, error), v5factories map[string]func() (tfprotov5.ProviderServer, error)) error {
+func runProviderCommand(t testing.T, f func() error, wd *plugintest.WorkingDir, factories map[string]ProviderFactoryFunc, v5factories map[string]ProviderFactoryV5Func) error {
 	// don't point to this as a test failure location
 	// point to whatever called it
 	t.Helper()

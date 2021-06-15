@@ -298,12 +298,12 @@ type TestCase struct {
 	//
 	//    # ...
 	//  }
-	ProviderFactories map[string]func() (*schema.Provider, error)
+	ProviderFactories map[string]ProviderFactoryFunc
 
 	// ProtoV5ProviderFactories serves the same purpose as ProviderFactories,
 	// but for protocol v5 providers defined using the terraform-plugin-go
 	// ProviderServer interface.
-	ProtoV5ProviderFactories map[string]func() (tfprotov5.ProviderServer, error)
+	ProtoV5ProviderFactories map[string]ProviderFactoryV5Func
 
 	// Providers is the ResourceProvider that will be under test.
 	//
@@ -346,6 +346,13 @@ type TestCase struct {
 	IDRefreshName   string
 	IDRefreshIgnore []string
 }
+
+// ProviderFactoryFunc returns a Provider instance based on the Terraform Plugin SDK.
+type ProviderFactoryFunc func() (*schema.Provider, error)
+
+// ProviderFactoryV5Func returns a Provider instance based on version 5 of the Protocol.
+// This is useful when instantitating a Plugin based on terraform-plugin-go.
+type ProviderFactoryV5Func func() (tfprotov5.ProviderServer, error)
 
 // ExternalProvider holds information about third-party providers that should
 // be downloaded by Terraform as part of running the test step.
@@ -523,7 +530,7 @@ func Test(t testing.T, c TestCase) {
 
 	// Copy any explicitly passed providers to factories, this is for backwards compatibility.
 	if len(c.Providers) > 0 {
-		c.ProviderFactories = map[string]func() (*schema.Provider, error){}
+		c.ProviderFactories = map[string]ProviderFactoryFunc{}
 
 		for name, p := range c.Providers {
 			if _, ok := c.ProviderFactories[name]; ok {
